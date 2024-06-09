@@ -41,6 +41,7 @@ def transform_coordinates(camera_delta, cam):
 
     camera_delta = np.array(camera_delta) - translation
     world_delta = rotMatrix @ camera_delta
+    world_delta[-1] = camera_delta[-2]
 
     new_coords = world_coords + world_delta
     return new_coords
