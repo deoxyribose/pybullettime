@@ -19,6 +19,7 @@ def move_arrows():
         x_delta = 0.125
     if keys.get(65295):  # RIGHT
         x_delta = - 0.125
+
     camera_delta = [x_delta, y_delta, 0]
     new_world_coords = transform_coordinates(camera_delta, cam)
     pb.resetDebugVisualizerCamera(cameraYaw = cam[8], cameraPitch= cam[9],cameraDistance = cam[10],cameraTargetPosition=new_world_coords) 
@@ -36,5 +37,6 @@ def transform_coordinates(camera_delta, cam):
     camera_delta = np.array(camera_delta) - translation
     world_delta = rotMatrix @ camera_delta
 
+    world_delta[-1] = 0
     new_coords = world_coords + world_delta
     return new_coords
