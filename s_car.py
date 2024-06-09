@@ -4,6 +4,7 @@ import numpy as np
 import pybullet as pb
 import time
 import pybullet_data
+from keyboard_control import move_arrows
 
 from s_shock_absorber import ShockAbsorber
 
@@ -64,6 +65,9 @@ def main():
         time.sleep(1.0/240.0)
 
         car.update()
+        move_arrows()
+
+        
 
 if __name__ == "__main__":
     main()
