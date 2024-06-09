@@ -79,20 +79,26 @@ def main():
     bumpLIds = []
     bumpRIds = []
     for ix in range(4):
-        bumpLIds.append(pb.createMultiBody(baseMass=100, basePosition=[-4 - 2 * ix, -4.5, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
-        bumpRIds.append(pb.createMultiBody(baseMass=100, basePosition=[-5 - 2 * ix, 4.5, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
+        bumpLIds.append(pb.createMultiBody(baseMass=100, basePosition=[-4 - 2 * ix, -7.5, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
+        bumpRIds.append(pb.createMultiBody(baseMass=100, basePosition=[-5 - 2 * ix, 7.5, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
         last_distance = -5 - 2 * ix
 
     bumpCIds = []
     for ix in range(8):
         bumpCIds.append(pb.createMultiBody(baseMass=100, basePosition=[last_distance - 1 - ix, 0, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
 
+    target_course = pb.getQuaternionFromEuler([0, 0, 0])
+
     while True:
         pb.stepSimulation()
         time.sleep(1.0/240.0)
 
         pos, ori = pb.getBasePositionAndOrientation(car.carId)
-        course = pb.getEulerFromQuaternion(ori)[2]
+        if pos[0] < -21:
+            target_course = pb.getQuaternionFromEuler([0, 0, 3.141593])
+        elif pos[0] > 10:
+            target_course = pb.getQuaternionFromEuler([0, 0, 0])
+        course = pb.getEulerFromQuaternion(pb.getDifferenceQuaternion(target_course, ori))[2]
         car.steer(-course)
 
         car.update()
