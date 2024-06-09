@@ -43,12 +43,15 @@ class Car():
             s.register(self.carId, l-1, l, [0, 0, 1])
 
         pb.setJointMotorControl2(self.carId, 1, pb.POSITION_CONTROL, targetPosition=0, force=100)
-        # pb.setJointMotorControl2(self.carId, 4, pb.POSITION_CONTROL, targetPosition=0, force=100)
 
-        pb.setJointMotorControl2(self.carId, 3, pb.VELOCITY_CONTROL, targetVelocity=6, force=10)
-        pb.setJointMotorControl2(self.carId, 6, pb.VELOCITY_CONTROL, targetVelocity=6, force=10)
-        pb.setJointMotorControl2(self.carId, 7, pb.VELOCITY_CONTROL, targetVelocity=6, force=10)
-        pb.setJointMotorControl2(self.carId, 10, pb.VELOCITY_CONTROL, targetVelocity=6, force=10)
+        self.speed(6)
+
+
+    def speed(self, target_speed):
+        pb.setJointMotorControl2(self.carId, 3, pb.VELOCITY_CONTROL, targetVelocity=target_speed, force=10)
+        pb.setJointMotorControl2(self.carId, 6, pb.VELOCITY_CONTROL, targetVelocity=target_speed, force=10)
+        pb.setJointMotorControl2(self.carId, 7, pb.VELOCITY_CONTROL, targetVelocity=target_speed, force=10)
+        pb.setJointMotorControl2(self.carId, 10, pb.VELOCITY_CONTROL, targetVelocity=target_speed, force=10)
 
     def steer(self, correction):
         if correction > 0.5:
@@ -87,18 +90,30 @@ def main():
     for ix in range(8):
         bumpCIds.append(pb.createMultiBody(baseMass=100, basePosition=[last_distance - 1 - ix, 0, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
 
-    target_course = pb.getQuaternionFromEuler([0, 0, 0])
-
     while True:
         pb.stepSimulation()
         time.sleep(1.0/240.0)
 
+        target_courses =  []
         pos, ori = pb.getBasePositionAndOrientation(car.carId)
         if pos[0] < -21:
-            target_course = pb.getQuaternionFromEuler([0, 0, 3.141593])
+            target_courses.append([0, 0, 3.141593])
+            car.speed(18)
         elif pos[0] > 10:
-            target_course = pb.getQuaternionFromEuler([0, 0, 0])
-        course = pb.getEulerFromQuaternion(pb.getDifferenceQuaternion(target_course, ori))[2]
+            target_courses.append([0, 0, 0])
+            car.speed(6)
+
+        if pos[1] < -22:
+            target_courses.append([0, 0, -1.5])
+        elif pos[1] > 22:
+            target_courses.append([0, 0, 1.5])
+
+        if len(target_courses) > 0:
+            target_course = sum(x[2] for x in target_courses) / len(target_courses)
+            target_course = pb.getQuaternionFromEuler([0, 0, target_course])
+            course = pb.getEulerFromQuaternion(pb.getDifferenceQuaternion(target_course, ori))[2]
+        else:
+            course = 0
         car.steer(-course)
 
         car.update()
