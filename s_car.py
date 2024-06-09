@@ -35,14 +35,15 @@ class Car():
                                    linkParentIndices=[0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                                    linkInertialFramePositions=[[0, 0, 0]] * 14,
                                    linkInertialFrameOrientations=[[0, 0, 0, 1]] * 14,
-                                   linkJointTypes=[pb.JOINT_REVOLUTE] + [pb.JOINT_FIXED] * 5 + [pb.JOINT_PRISMATIC] * 4 + [pb.JOINT_REVOLUTE] * 4,
+                                   linkJointTypes=[pb.JOINT_FIXED] * 2 + [pb.JOINT_REVOLUTE] * 2 + [pb.JOINT_FIXED] * 2 + [pb.JOINT_PRISMATIC] * 4 + [pb.JOINT_REVOLUTE] * 4,
                                         linkJointAxis=[[0, 0, 1]] * 10 + [[0, 0, 1]] * 4)
 
         self.shocks = [ShockAbsorber(1.5 * 2**4, 2) for _ in range(4)]
         for s, l in zip(self.shocks, [2, 5, 9, 12]):
             s.register(self.carId, l-1, l, [0, 0, 1])
 
-        pb.setJointMotorControl2(self.carId, 0, pb.POSITION_CONTROL, targetPosition=0, force=100)
+        pb.setJointMotorControl2(self.carId, 1, pb.POSITION_CONTROL, targetPosition=0, force=100)
+        # pb.setJointMotorControl2(self.carId, 4, pb.POSITION_CONTROL, targetPosition=0, force=100)
 
         pb.setJointMotorControl2(self.carId, 3, pb.VELOCITY_CONTROL, targetVelocity=6, force=10)
         pb.setJointMotorControl2(self.carId, 6, pb.VELOCITY_CONTROL, targetVelocity=6, force=10)
@@ -54,7 +55,9 @@ class Car():
             correction = 0.5
         elif correction < -0.5:
             correction = -0.5
-        pb.setJointMotorControl2(self.carId, 0, pb.POSITION_CONTROL, targetPosition=correction, force=100)
+
+        pb.setJointMotorControl2(self.carId, 1, pb.POSITION_CONTROL, targetPosition=correction, force=100)
+        pb.setJointMotorControl2(self.carId, 4, pb.POSITION_CONTROL, targetPosition=correction, force=100)
 
 
 
@@ -72,12 +75,17 @@ def main():
 
     car = Car()
 
-    bump = pb.createCollisionShape(pb.GEOM_BOX, halfExtents=[0.1, 5, 0.1])
+    bump = pb.createCollisionShape(pb.GEOM_BOX, halfExtents=[0.0625, 8, 0.0625])
     bumpLIds = []
     bumpRIds = []
     for ix in range(4):
-        bumpLIds.append(pb.createMultiBody(baseMass=100, basePosition=[-4 - 2 * ix, -4.5, 0.05], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
-        bumpRIds.append(pb.createMultiBody(baseMass=100, basePosition=[-5 - 2 * ix, 4.5, 0.05], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
+        bumpLIds.append(pb.createMultiBody(baseMass=100, basePosition=[-4 - 2 * ix, -4.5, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
+        bumpRIds.append(pb.createMultiBody(baseMass=100, basePosition=[-5 - 2 * ix, 4.5, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
+        last_distance = -5 - 2 * ix
+
+    bumpCIds = []
+    for ix in range(8):
+        bumpCIds.append(pb.createMultiBody(baseMass=100, basePosition=[last_distance - 1 - ix, 0, 0.2], baseOrientation=[0, 0, 0, 1], baseCollisionShapeIndex=bump, baseVisualShapeIndex=-1))
 
     while True:
         pb.stepSimulation()
