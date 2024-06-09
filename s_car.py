@@ -67,7 +67,5 @@ def main():
         car.update()
         move_arrows()
 
-        
-
 if __name__ == "__main__":
     main()
