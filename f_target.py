@@ -27,17 +27,17 @@ class Target():
                                      linkJointAxis=[[0, 0, 1], [0, 0, 1]]
         )
 
-class Bullet():
+class Ball():
     def __init__(self):
-        bullet = pb.createCollisionShape(pb.GEOM_SPHERE, radius=0.5)
+        ball = pb.createCollisionShape(pb.GEOM_SPHERE, radius=0.5)
         self.id = pb.createMultiBody(baseMass=0.1,
                                      basePosition=[10, 0, 0.5],
                                      baseOrientation=[0, 0, 0, 1],
-                                     baseCollisionShapeIndex=bullet,
-                                     baseVisualShapeIndex=bullet,
+                                     baseCollisionShapeIndex=ball,
+                                     baseVisualShapeIndex=ball,
                                     #  linkMasses=[0.1],
-                                    #  linkCollisionShapeIndices=[bullet],
-                                    #  linkVisualShapeIndices=[bullet],
+                                    #  linkCollisionShapeIndices=[ball],
+                                    #  linkVisualShapeIndices=[ball],
                                     #  linkPositions=[[0, 0, 0]],
                                     #  linkOrientations=[[0, 0, 0, 1]],
                                     #  linkParentIndices=[0],
@@ -48,28 +48,13 @@ class Bullet():
         )
         
 def computeInitForce():
-    # we want to move the ball to the target
-    # the target is at [0, 0, 4.5]
-    # the ball is at [10, 0, 0.5]
-    # the ball has mass 0.1
-    # the ball's initial velocity is 0
-    # we want to move this mass to the target in 1 second
-    # taking into account gravity
-    
-    # force = mass * acceleration
-    # acceleration = (final_velocity - initial_velocity) / time
-    # force = mass * (final_velocity - initial_velocity) / time
+    return [-200, 0, 300]
+    # return [30, 50, 100]
 
-    # final_velocity = displacement / time
-    # displacement = target_position - initial_position
-    # final_velocity = (target_position - initial_position) / time
-
-    # force = mass * ((target_position - initial_position) / time - initial_velocity) / time
-    # force = mass * ((target_position - initial_position) / time - 0) / time
-
-    # force = mass * (target_position - initial_position) / time**2
-    force = 0.1 * np.array([10, 0, 4.0]) / 1**2
-    return force * 100
+def computeInitPosition(force, ballPos, ball_radius=0.5):
+    force_mag = np.linalg.norm(force)
+    force_dir = force / force_mag
+    return ballPos - force_dir * ball_radius
 
 
 def main():
@@ -83,25 +68,38 @@ def main():
     pb.resetDebugVisualizerCamera(cameraDistance=cam[10], cameraYaw=cam[8], cameraPitch=cam[9], cameraTargetPosition=[15, -3, 0])
 
     target = Target()
-    bullet = Bullet()
+    ball = Ball()
 
     initForce = computeInitForce()
     print(initForce)
-    time.sleep(.3)
     start = time.time()
-    pb.applyExternalForce(bullet.id, -1, forceObj=initForce, posObj=[15, 0, 0.5], flags=pb.LINK_FRAME)
+    ballPos, ballOrn = pb.getBasePositionAndOrientation(ball.id)
+    print(ballPos)
+    # print(ballOrn)
 
-    while True:
+    initPos = computeInitPosition(initForce, ballPos)
+    print(initPos)
+    pb.applyExternalForce(ball.id, -1, forceObj=initForce, posObj=initPos, flags=pb.WORLD_FRAME)
+
+    time.sleep(1)
+
+    time_elapsed = 0
+    while time_elapsed < 10.0:
         move_arrows()
         pb.stepSimulation()
         time.sleep(1/240)
 
-        # detect collision between bullet and target
-        contact = pb.getContactPoints(bullet.id, target.id)
+        # detect collision between ball and target
+        contact = pb.getContactPoints(ball.id, target.id)
         if contact:
             print("Hit!")
-            print(time.time() - start)
+            print(time_elapsed)
+            # ballPos, ballOrn = pb.getBasePositionAndOrientation(ball.id)
             # break
+        time_elapsed = time.time() - start
+    
+    pb.disconnect()
+
 
 if __name__ == "__main__":
     main()
